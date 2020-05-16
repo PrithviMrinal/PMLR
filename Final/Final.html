@@ -1,0 +1,139 @@
+<!DOCTYPE html>
+<!-- saved from url=(0088)file:///C:/Users/Abhishek/Desktop/html/Final/My%20FInal%20Project_16th%20May%202020.html -->
+<html><head><meta http-equiv="Content-Type" content="text/html; charset=UTF-8"></head><body><br lang="en">
+
+    
+    <title>Title</title>
+
+<br>
+<bold>
+    <h1>
+    My website for Project on Practical ML using R</h1>
+    <h2><br>By Ms. Rachana S. Oza<br></h2>
+</bold>
+<p>
+<bold>Project Definition</bold>
+Using devices such as Jawbone Up, Nike FuelBand, and Fitbit it is now possible to collect a large amount of data about personal activity relatively inexpensively. These type of devices are part of the quantified self movement – a group of enthusiasts who take measurements about themselves regularly to improve their health, to find patterns in their behavior, or because they are tech geeks. One thing that people regularly do is quantify how much of a particular activity they do, but they rarely quantify how well they do it. In this project, your goal will be to use data from accelerometers on the belt, forearm, arm, and dumbell of 6 participants. They were asked to perform barbell lifts correctly and incorrectly in 5 different ways. More information is available from the website here: http://groupware.les.inf.puc-rio.br/har (see the section on the Weight Lifting Exercise Dataset).
+<br>- Given by Coursera Course Coordinator <br>
+</p>
+
+<!--This is the step 1 -->
+<h2><br>Step 1 : Include R Packages<br></h2><h2>
+</h2><h3>
+
+    <br>library(caret);<br>
+    <br>library(AppliedPredictiveModeling);<br>
+    <br>library(randomForest);<br>
+    <br>library(knitr);<br>
+    <br>library(rpart);<br>
+    <br>library(rpart.plot);<br>
+    <br>library(rattle);<br>
+    <br>library(corrplot)<br>
+
+</h3>
+
+<!--This is the step 2 -->
+<h2><br>Step 2 : Loading training and testing datasets<br></h2><h2>
+</h2><h3>
+
+    <br>Train &lt;- <href>"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-training.csv"</href><br>
+    <br>Test &lt;- <href>"http://d396qusza40orc.cloudfront.net/predmachlearn/pml-testing.csv"</href><br>
+    <br>training &lt;- read.csv(url(Train))<br>
+    <br>testing &lt;- read.csv(url(Test))<br>
+
+</h3>
+<!--This is the step 3 -->
+<h2><br>Step 3 : Create Data Partition <br></h2><h2>
+</h2><h3>
+
+    <br>inTrain &lt;- createDataPartition(training$classe, p=0.7, list=FALSE)<br>
+    <br>TrainSet &lt;- training[inTrain, ]<br>
+    <br>TestSet &lt;- training[-inTrain, ]<br>
+
+</h3>
+
+<!--This is the step 4 -->
+<h2><br>Step 4 : Preprocess the data to drop zero and NAN values<br></h2><h2>
+</h2><h3>
+
+    <br>NonZV &lt;- nearZeroVar(TrainSet)<br>
+    <br>TrainSet &lt;- TrainSet[, -NonZV]<br>
+    <br>TestSet &lt;- TestSet[, -NonZV]<br>
+    <br>NA_ALL &lt;- sapply(TrainSet, function(x) mean(is.na(x))) &gt; 0.95<br>
+    <br>TrainSet &lt;- TrainSet[, NA_ALL==FALSE]<br>
+    <br>TestSet &lt;- TestSet[, NA_ALL==FALSE]<br>
+    <br><bold><underline>Dropping the first five columns from the training and testing dataset</underline>&gt;<br>
+    <br>TrainSet &lt;- TrainSet[, -(1:5)]<br>
+    <br>TestSet &lt;- TestSet[, -(1:5)]<br>
+
+</bold></h3>
+
+<!--This is the step 5 -->
+<h2><br>Step 5 : Random Forest to train and predict model<br></h2><h2>
+</h2><h3>
+
+    <br>set.seed(12345)<br>
+    <br>controlRF &lt;- trainControl(method="cv", number=3, verboseIter=FALSE)<br>
+    <br>modRF &lt;- train(classe ~ ., data=TrainSet, method="rf", + trControl=controlRF)<br>
+    <br>modRF$finalModel<br>
+    <img src="./Final_files/RF.jpg" align="center" alt="Training using Random Forest" width="400" height="350">
+    <br>predictRF &lt;- predict(modFitRandForest, newdata=TestSet)<br>
+    <br>To print the confusion matrix we need to factor both the predicRF and TestSet for equal levels. So here I have called the as.factor function within the confusionMatrix () functions.<br>
+    <br>Statistics_RF &lt;- confusionMatrix(predictRF, as.factor(TestSet$classe))<br>
+    <br>Statistics_RF<br>
+    <img src="./Final_files/Confusion MAtrix RF.jpg" align="center" alt="Confusion Matrix for Random Forest" width="600" height="650">
+
+</h3>
+
+<!--This is the step 6 -->
+<h2><br>Step 6 : Decision Tree to train and predict model<br></h2><h2>
+</h2><h3>
+
+    <br>set.seed(12345)<br>
+    <br>modDT &lt;- rpart(classe ~ ., data=TrainSet, method="class")<br>
+    <br>fancyRpartPlot(modDT)<br>
+    <img src="./Final_files/DT PLOT.jpg" align="center" alt="Training using Decision Tree" width="400" height="350">
+    <br>predictDecTree &lt;- predict(modDT, newdata=TestSet, type="class")<br>
+    <br>To print the confusion matrix we need to factor both the predicDecTree and TestSet for equal levels. So here I have called the as.factor function within the confusionMatrix () functions.<br>
+    <br>Staestics_DT &lt;- confusionMatrix(predictDecTree, as.factor(TestSet$classe))<br>
+    <br>Statistics_DT<br>
+    <img src="./Final_files/Confusion MAtrix DT.jpg" align="center" alt="Confusion Matrix for Decision Tree" width="600" height="650">
+
+</h3>
+
+
+<!--This is the step 7 -->
+<h2><br>Step 7 : GBM to train and predict model<br></h2><h2>
+</h2><h3>
+
+    <br>set.seed(12345)<br>
+    <br>controlGBM &lt;- trainControl(method = "repeatedcv", number = 5, repeats = 1)<br>
+    <br>modGBM &lt;- train(classe ~ ., data=TrainSet, method = "gbm", + trControl = controlGBM, verbose = FALSE)<br>
+    <br>modGBM$finalModel<br>
+    <img src="./Final_files/GBM PLOT.jpg" align="center" alt="Training using GBM" width="350" height="80">
+    <br>predictGBM &lt;- predict(modGBM, newdata=TestSet)<br>
+    <br>To print the confusion matrix we need to factor both the predicGBM and TestSet for equal levels. So here I have called the as.factor function within the confusionMatrix () functions.<br>
+    <br>Statestics_GBM &lt;- confusionMatrix(predictGBM, as.factor(TestSet$classe))<br>
+    <br>Statistics_GBM<br>
+    <img src="./Final_files/Confusion MAtrix GBM.jpg" align="center" alt="Confusion Matrix for GBM" width="600" height="650">
+
+</h3>
+
+<!--This is the step 8 -->
+<h2><br>Step 8 : Final Result<br></h2><h2>
+</h2><h2>
+    <br>
+    <br>predictTEST &lt;- predict(modRF, newdata=testing)<br>
+    <br>predictTEST<br>
+    <img src="./Final_files/RF PLOT.jpg" align="center" alt="Output using Random Forest" width="350" height="80">
+    <br>I. RandomForest (RF) : Accuracy : 0.9963<br>
+    <br>II. Decision Tree (DT) : Accuracy : 0.7368<br>
+    <br>III.Gradient Boosting Model (GBM) : 0.9871<br>
+</h2>
+
+<!--This is the step 7 -->
+<h2><br>Step 7 : Conclusion<br></h2><h2>
+</h2><h1><bold>Thus the best working model is Random Forest only.</bold>bold&gt;</h1>
+
+
+</body></html>
